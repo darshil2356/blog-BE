@@ -14,7 +14,22 @@ const PORT = process.env.PORT || 4000;
 
 app.use(helmet());
 app.use(express.json({ limit: '10kb' })); // don't allow huge payloads
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:3000', // dev
+  'https://blog-fe-git-main-darshil2356s-projects.vercel.app', // prod
+];
+const corsOptions = {
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
+};
+app.use(cors(corsOptions));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // routes
