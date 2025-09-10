@@ -1,4 +1,3 @@
-// server.js
 require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
@@ -12,31 +11,53 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Security headers
 app.use(helmet());
-app.use(express.json({ limit: '10kb' })); 
+
+// Body parser
+app.use(express.json({ limit: '10kb' }));
+
+// ----------------------------
+// Global CORS setup
+// ----------------------------
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests from localhost:3000 and any other trusted origin
+    if (!origin || origin === 'http://localhost:3000') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
-app.use(cors(corsOptions));
-// Preflight for all routes
-app.options('*', cors(corsOptions));
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// routes
+// Apply CORS middleware globally
+app.use(cors(corsOptions));
+
+// Handle preflight requests for all routes
+app.options('*', cors(corsOptions));
+
+// Logger
+app.use(morgan(process.env.NODE_ENV !== 'production' ? 'combined' : 'dev'));
+
+// ----------------------------
+// Routes
+// ----------------------------
 app.use('/api/posts', postsRouter);
 app.use('/api/comments', commentsRouter);
 
-// healthcheck
+// Health check
 app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
-// error handler
+// Error handler
 app.use(errorHandler);
 
-// start server
+// ----------------------------
+// Start server
+// ----------------------------
 (async () => {
-    // console.log(process.env.MONGO_URI)
   await connectDB(process.env.MONGO_URI);
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
