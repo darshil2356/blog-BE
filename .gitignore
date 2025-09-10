@@ -28,3 +28,4 @@ coverage/
 
 # Grunt
 .env
+.env*

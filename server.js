@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 4000;
 
 app.use(helmet());
 app.use(express.json({ limit: '10kb' })); // don't allow huge payloads
-app.use(cors('*'));
+app.use(cors());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // routes
