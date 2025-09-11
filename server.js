@@ -1,52 +1,41 @@
 // server.js
-require('dotenv').config();
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const morgan = require('morgan');
-const connectDB = require('./config/db');
-const postsRouter = require('./routes/posts');
-const commentsRouter = require('./routes/comments');
-const errorHandler = require('./middleware/errorHandler');
+require("dotenv").config();
+const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
+const morgan = require("morgan");
+const connectDB = require("./config/db");
+const postsRouter = require("./routes/posts");
+const commentsRouter = require("./routes/comments");
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// security
 app.use(helmet());
-app.use(express.json({ limit: '10kb' })); // don't allow huge payloads
-const allowedOrigins = [
-  'http://localhost:3000', // dev
-  'https://blog-fe-git-main-darshil2356s-projects.vercel.app', // prod
-];
-const corsOptions = {
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization']
-};
-app.use(cors(corsOptions));
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(express.json({ limit: "10kb" }));
+
+// ✅ allow all origins for now (to fix CORS issue)
+app.use(cors({ origin: "*", credentials: true }));
+
+// logging
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 // routes
-app.use('/api/posts', postsRouter);
-app.use('/api/comments', commentsRouter);
+app.use("/api/posts", postsRouter);
+app.use("/api/comments", commentsRouter);
 
 // healthcheck
-app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
+app.get("/api/health", (req, res) => res.json({ ok: true, ts: Date.now() }));
 
-// root route
-app.get('/', (req, res) => res.send('API Running'));
+// root
+app.get("/", (req, res) => res.send("API Running"));
 
 // error handler
 app.use(errorHandler);
 
-// start server
+// start server locally
 if (require.main === module) {
   (async () => {
     await connectDB(process.env.MONGO_URI);
@@ -55,8 +44,10 @@ if (require.main === module) {
     });
   })();
 } else {
-  // For serverless (Vercel), just connect DB once
-  connectDB(process.env.MONGO_URI);
+  // For Vercel, connect DB lazily
+  connectDB(process.env.MONGO_URI)
+    .then(() => console.log("MongoDB connected"))
+    .catch(err => console.error("MongoDB connection failed", err));
 }
 
 module.exports = app;
