@@ -44,12 +44,16 @@ app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 app.use(errorHandler);
 
 // start server
-(async () => {
-    // console.log(process.env.MONGO_URI)
-  await connectDB(process.env.MONGO_URI);
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-})();
+if (require.main === module) {
+  (async () => {
+    await connectDB(process.env.MONGO_URI);
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })();
+} else {
+  // For serverless (Vercel), just connect DB once
+  connectDB(process.env.MONGO_URI);
+}
 
 module.exports = app;
