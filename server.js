@@ -40,6 +40,9 @@ app.use('/api/comments', commentsRouter);
 // healthcheck
 app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
+// root route
+app.get('/', (req, res) => res.send('API Running'));
+
 // error handler
 app.use(errorHandler);
 
